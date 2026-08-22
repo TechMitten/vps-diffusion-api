@@ -72,20 +72,6 @@ This prints the total installed RAM in MB.
           memory: 6000M
 ```
 
-Automated one-liner (calculates a safe memory value and updates docker-compose.yml in-place):
-
-```bash
-# calculates safe memory and replaces the memory: line in docker-compose.yml
-total=$(free -m | awk '/^Mem:/{print $2}'); 
-if [ "$total" -ge 8192 ]; then safe=$((total-1024));
-elif [ "$total" -ge 4096 ]; then safe=$((total-512));
-else safe=$((total*85/100)); fi; 
-safe_str="${safe}M"; 
-# replace the first memory: <value>M occurrence under the api service
-sed -i -E "0,/^\s*memory:\s*[0-9]+M/ s//    memory: ${safe_str}/" docker-compose.yml && 
-printf "Set docker-compose memory to %s (host total: %s MB)\n" "$safe_str" "$total"
-```
-
 Notes and troubleshooting:
 
 - Docker Compose's `deploy` > `resources` > `limits` section is honored by Docker Swarm and some orchestrators; on single-node Docker Compose environments the `mem_limit` option (Compose v1) or cgroup settings may be used differently. The examples here are intended as a simple way to prevent assigning more memory than your host can safely provide. If you are using a different Compose file version, consult Docker Compose docs for the exact field your runtime honors.
@@ -127,21 +113,6 @@ Quick manual update in docker-compose.yml:
         limits:
           cpus: '3.5'
           memory: 6000M
-```
-
-Automated one-liner (calculates a safe cpus value and updates docker-compose.yml in-place):
-
-```bash
-# calculates safe CPUs and replaces the cpus: line in docker-compose.yml
-total=$(nproc --all); 
-if [ "$total" -ge 8 ]; then safe=$(awk "BEGIN{printf \"%.1f\", $total-1}");
-elif [ "$total" -ge 4 ]; then safe=$(awk "BEGIN{printf \"%.1f\", $total-0.5}");
-else safe=$(awk "BEGIN{printf \"%.1f\", $total*0.85}"); fi; 
-# keep a minimum of 0.5 CPUs
-cmp=$(awk "BEGIN{print ($safe < 0.5)}"); if [ "$cmp" -eq 1 ]; then safe=0.5; fi; 
-# replace the first cpus: '...' occurrence
-sed -i -E "0,/^\s*cpus:\s*'.*'/ s//          cpus: '${safe}'/" docker-compose.yml && 
-printf "Set docker-compose cpus to %s (host vCPUs: %s)\n" "$safe" "$total"
 ```
 
 Notes and troubleshooting:
