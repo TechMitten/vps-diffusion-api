@@ -19,11 +19,14 @@ RUN pip install --no-cache-dir --upgrade pip && \
     uvicorn \
     pillow
 
-# Download the ultra-lightweight SDXS OpenVINO model
+# Download SDXS and the Tiny AutoEncoder (TAESD)
 RUN python3 -c '\
 from optimum.intel.openvino import OVStableDiffusionPipeline; \
+from diffusers import AutoencoderTiny; \
 pipe = OVStableDiffusionPipeline.from_pretrained("rupeshs/sdxs-512-0.9-openvino", compile=False); \
 pipe.save_pretrained("/app/model"); \
+taesd = AutoencoderTiny.from_pretrained("madebyollin/taesd"); \
+taesd.save_pretrained("/app/taesd"); \
 '
 
 COPY app.py .
