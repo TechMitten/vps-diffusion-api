@@ -2,6 +2,14 @@
 
 Transform your low-end, no-GPU VPS into a fully functional text-to-image API. VPS Diffusion API leverages OpenVINO and SD-Turbo to run AI image generation directly on standard CPUs. Deploy your own production-ready AI endpoint on budget hardware.
 
+## Example Outputs
+
+Images generated at 512x512 with 1-step inference on a standard CPU:
+
+| Example 1 | Example 2 | Example 3 |
+| :---: | :---: | :---: |
+| <img src="https://raw.githubusercontent.com/TechMitten/vps-diffusion-api/refs/heads/main/examples/1.jpg" width="250" alt="Generated sample 1" /> | <img src="https://raw.githubusercontent.com/TechMitten/vps-diffusion-api/refs/heads/main/examples/2.jpg" width="250" alt="Generated sample 2" /> | <img src="https://raw.githubusercontent.com/TechMitten/vps-diffusion-api/refs/heads/main/examples/3.jpg" width="250" alt="Generated sample 3" /> |
+
 ## Features
 
 * **CPU-Native Acceleration:** Utilizes Intel OpenVINO for graph optimization and thread affinity.
