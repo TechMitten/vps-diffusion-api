@@ -1,12 +1,12 @@
 # VPS Diffusion API
 
-Transform your low-end, no-GPU VPS into a fully functional text-to-image API. VPS Diffusion API leverages OpenVINO, SDXS, and TAESD (Tiny AutoEncoder) to run rapid AI image generation directly on standard CPUs. Deploy your own production-ready AI endpoint on budget hardware.
+Transform your low-end, no-GPU VPS into a fully functional text-to-image API. VPS Diffusion API leverages OpenVINO and SD-Turbo to run high-quality AI image generation directly on standard CPUs. Deploy your own production-ready AI endpoint on budget hardware.
 
 ## Features
 
 * **CPU-Native Acceleration:** Utilizes Intel OpenVINO for graph optimization and thread affinity.
-* **Sub-Second Distillation:** Powered by SDXS-512 for single-step diffusion trajectories.
-* **Instant Latent Decoding:** Uses TAESD (Tiny AutoEncoder) to bypass traditional, CPU-heavy VAE bottlenecks and decode latents into pixels in milliseconds.
+* **Single-Step Inference:** Powered by SD-Turbo for single-step diffusion trajectories.
+* **Smart Memory Management:** Includes lazy loading and auto-unloading to free host RAM during idle periods.
 * **Built-in Queue Management:** Asynchronous locking prevents CPU core contention and server-crashing request pileups.
 
 ## Minimum Hardware Requirements
@@ -28,7 +28,7 @@ docker compose up -d --build
 
 ```
 
-The container will automatically download the lightweight OpenVINO weights and TAESD decoder, compile the execution graph for your specific CPU, and perform a warm-up generation during startup so the first user request is processed immediately without cold-start latency.
+The container will automatically download the OpenVINO weights, compile the execution graph for your specific CPU, and start the FastAPI service.
 
 ## API Usage
 
@@ -44,15 +44,15 @@ curl -X POST "http://<YOUR_VPS_IP>:8000/generate" \
 
 You can also navigate to `http://<YOUR_VPS_IP>:8000/docs` in your browser to access the interactive Swagger UI. This built-in documentation allows you to test prompts, adjust step counts, and view generated images directly in the browser.
 
-## SDXS & TAESD Optimal Settings
+## SD-Turbo Optimal Settings
 
-For best results with SDXS image generation, use the following recommended parameters:
+For best results with SD-Turbo image generation, use the following recommended parameters:
 
 | Parameter | Recommended Value | Reason |
 | --- | --- | --- |
 | `steps` | 1 | The network is explicitly calibrated for single-step inference. |
 | `guidance_scale` | 0.0 | Guidance is distilled into the model; values >0.0 introduce distortion. |
-| `resolution` | 512x512 | SDXS-512 and TAESD have fixed architectural positional encodings for 512px. |
+| `resolution` | 512x512 | Fixed architectural positional encodings are optimized for 512px. |
 
 ## Adjusting the memory limit in docker-compose.yml
 
@@ -120,7 +120,9 @@ lscpu | awk '/^CPU\(s\):/ {print $2}'
 * Else: set `container_cpus = round(total_vcpus * 0.85, 1)`
 
 
+
 These rules leave 1 CPU for larger hosts, 0.5 CPU for medium hosts, and ~15% headroom for very small hosts.
+
 * Example: for an 8-vCPU VPS the recommended setting would be `cpus: '7.0'`. For a 4-vCPU VPS use `cpus: '3.5'`.
 
 Quick manual update in `docker-compose.yml`:
