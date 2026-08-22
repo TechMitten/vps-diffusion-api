@@ -1,6 +1,6 @@
 # VPS Diffusion API
 
-Transform your low-end, no-GPU VPS into a fully functional text-to-image API. VPS Diffusion API leverages OpenVINO and SD-Turbo to run high-quality AI image generation directly on standard CPUs. Deploy your own production-ready AI endpoint on budget hardware.
+Transform your low-end, no-GPU VPS into a fully functional text-to-image API. VPS Diffusion API leverages OpenVINO and SD-Turbo to run AI image generation directly on standard CPUs. Deploy your own production-ready AI endpoint on budget hardware.
 
 ## Features
 
