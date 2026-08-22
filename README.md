@@ -1,6 +1,6 @@
 # VPS Diffusion API
 
-Transform your low-end, no-GPU VPS into a fully functional text-to-image API. VPS Diffusion API leverages OpenVINO and SDXS to run AI image generation directly on basic CPUs. Deploy your own reliable text-to-image generation endpoint on budget VPS hardware.
+Transform your low-end, no-GPU VPS into a fully functional text-to-image API. VPS Diffusion API leverages OpenVINO and SDXS to run AI image generation directly on basic CPUs. Deploy your own reliab[...]
 
 ## Minimum Hardware Requirements
 
@@ -21,7 +21,7 @@ docker compose up -d --build
 
 ```
 
-The container will automatically download the lightweight OpenVINO weights, compile the execution graph for your specific CPU, and perform a warm-up generation during startup so the first user request is not delayed.
+The container will automatically download the lightweight OpenVINO weights, compile the execution graph for your specific CPU, and perform a warm-up generation during startup so the first user req[...]
 
 ## API Usage
 
@@ -35,15 +35,25 @@ curl -X POST "http://<YOUR_VPS_IP>:8000/generate" \
 
 ```
 
-You can also navigate to `http://<YOUR_VPS_IP>:8000/docs` in your browser to access the interactive Swagger UI. This built-in documentation allows you to test prompts, adjust step counts, and view model output.
+You can also navigate to `http://<YOUR_VPS_IP>:8000/docs` in your browser to access the interactive Swagger UI. This built-in documentation allows you to test prompts, adjust step counts, and view[...]
+
+## SDXS Optimal Settings
+
+For best results with SDXS image generation, use the following recommended parameters:
+
+| Parameter | Recommended Value | Reason |
+|-----------|-------------------|--------|
+| `steps` | 1 | The network is explicitly calibrated for single-step inference. |
+| `guidance_scale` | 0.0 | Guidance is distilled into the model; values >0.0 introduce distortion. |
+| `resolution` | 512x512 | SDXS-512 has fixed architectural positional encodings for 512px. |
 
 ## Adjusting the memory limit in docker-compose.yml
 
-The docker-compose.yml in this repository sets an example memory limit for the API service under `deploy.resources.limits.memory`. That value must be adapted to the amount of RAM available on your VPS — setting it too high can cause the container to exceed host memory and trigger the OOM killer during initial model load.
+The docker-compose.yml in this repository sets an example memory limit for the API service under `deploy.resources.limits.memory`. That value must be adapted to the amount of RAM available on your[...]
 
 Recommended approach:
 
-- Leave some RAM for the host OS and other processes. A safe rule of thumb is to reserve 512MB–1GB for the host and give the rest to the container. For machines with more RAM (>= 8GB) reserving 1GB is recommended; for smaller machines reserve at least 512MB.
+- Leave some RAM for the host OS and other processes. A safe rule of thumb is to reserve 512MB–1GB for the host and give the rest to the container. For machines with more RAM (>= 8GB) reserving [...]
 - The `memory` value in docker-compose.yml expects a number plus a unit (for example `7000M` for 7000 megabytes). The compose example currently uses `memory: 7000M`.
 
 Quick manual steps:
@@ -74,16 +84,16 @@ This prints the total installed RAM in MB.
 
 Notes and troubleshooting:
 
-- Docker Compose's `deploy` > `resources` > `limits` section is honored by Docker Swarm and some orchestrators; on single-node Docker Compose environments the `mem_limit` option (Compose v1) or cgroup settings may be used differently. The examples here are intended as a simple way to prevent assigning more memory than your host can safely provide. If you are using a different Compose file version, consult Docker Compose docs for the exact field your runtime honors.
+- Docker Compose's `deploy` > `resources` > `limits` section is honored by Docker Swarm and some orchestrators; on single-node Docker Compose environments the `mem_limit` option (Compose v1) or cg[...]
 - If the container exits with OOM or the host becomes unresponsive during model load, reduce the memory value and restart (`docker compose down && docker compose up -d --build`).
 - Always keep at least 512MB free for the host; on low-memory systems you may need to add swap to avoid failures during initial model compilation.
 
 
 ## Adjusting the CPU (cpus) value in docker-compose.yml
 
-The `cpus` field under `deploy.resources.limits` controls how many CPU cores (or fractional cores) the service may use. In docker-compose.yml this is expressed as a decimal (for example `cpus: '3.8'`) and maps to Docker's `--cpus` runtime flag for limiting CPU usage.
+The `cpus` field under `deploy.resources.limits` controls how many CPU cores (or fractional cores) the service may use. In docker-compose.yml this is expressed as a decimal (for example `cpus: '3.[...]
 
-Like memory, the `cpus` value should be chosen so the host keeps enough CPU for system tasks and background processes. Assigning all vCPUs to the container can make the host unresponsive during CPU-heavy operations (model compilation, warm-up).
+Like memory, the `cpus` value should be chosen so the host keeps enough CPU for system tasks and background processes. Assigning all vCPUs to the container can make the host unresponsive during CP[...]
 
 Recommended approach:
 
@@ -120,5 +130,4 @@ Notes and troubleshooting:
 - The `cpus` limit is advisory for some runtimes and is enforced as a cgroup quota by Docker; behavior may vary by host kernel and Docker version.
 - If the container is CPU-starved (very slow requests), increase the `cpus` value and restart the service. If the host becomes unresponsive, reduce the value and keep more headroom for the OS.
 - For predictable isolation in production, consider running in an orchestrator that enforces resource limits strictly (e.g., Kubernetes with proper resource requests/limits).
-
 
