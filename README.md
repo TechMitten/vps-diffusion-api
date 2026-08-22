@@ -93,3 +93,61 @@ Notes and troubleshooting:
 - Always keep at least 512MB free for the host; on low-memory systems you may need to add swap to avoid failures during initial model compilation.
 
 
+## Adjusting the CPU (cpus) value in docker-compose.yml
+
+The `cpus` field under `deploy.resources.limits` controls how many CPU cores (or fractional cores) the service may use. In docker-compose.yml this is expressed as a decimal (for example `cpus: '3.8'`) and maps to Docker's `--cpus` runtime flag for limiting CPU usage.
+
+Like memory, the `cpus` value should be chosen so the host keeps enough CPU for system tasks and background processes. Assigning all vCPUs to the container can make the host unresponsive during CPU-heavy operations (model compilation, warm-up).
+
+Recommended approach:
+
+- Discover how many vCPUs are available:
+
+```bash
+nproc --all
+# or
+lscpu | awk '/^CPU\(s\):/ {print $2}'
+```
+
+- Safe sizing rules of thumb:
+
+  - If total vCPUs >= 8: set container_cpus = total_vcpus - 1.0
+  - Else if total vCPUs >= 4: set container_cpus = total_vcpus - 0.5
+  - Else: set container_cpus = round(total_vcpus * 0.85, 1)
+
+  These rules leave 1 CPU for larger hosts, 0.5 CPU for medium hosts, and ~15% headroom for very small hosts.
+
+- Example: for an 8-vCPU VPS the recommended setting would be `cpus: '7.0'`. For a 4-vCPU VPS use `cpus: '3.5'`.
+
+Quick manual update in docker-compose.yml:
+
+```yaml
+    deploy:
+      resources:
+        limits:
+          cpus: '3.5'
+          memory: 6000M
+```
+
+Automated one-liner (calculates a safe cpus value and updates docker-compose.yml in-place):
+
+```bash
+# calculates safe CPUs and replaces the cpus: line in docker-compose.yml
+total=$(nproc --all); 
+if [ "$total" -ge 8 ]; then safe=$(awk "BEGIN{printf \"%.1f\", $total-1}");
+elif [ "$total" -ge 4 ]; then safe=$(awk "BEGIN{printf \"%.1f\", $total-0.5}");
+else safe=$(awk "BEGIN{printf \"%.1f\", $total*0.85}"); fi; 
+# keep a minimum of 0.5 CPUs
+cmp=$(awk "BEGIN{print ($safe < 0.5)}"); if [ "$cmp" -eq 1 ]; then safe=0.5; fi; 
+# replace the first cpus: '...' occurrence
+sed -i -E "0,/^\s*cpus:\s*'.*'/ s//          cpus: '${safe}'/" docker-compose.yml && 
+printf "Set docker-compose cpus to %s (host vCPUs: %s)\n" "$safe" "$total"
+```
+
+Notes and troubleshooting:
+
+- The `cpus` limit is advisory for some runtimes and is enforced as a cgroup quota by Docker; behavior may vary by host kernel and Docker version.
+- If the container is CPU-starved (very slow requests), increase the `cpus` value and restart the service. If the host becomes unresponsive, reduce the value and keep more headroom for the OS.
+- For predictable isolation in production, consider running in an orchestrator that enforces resource limits strictly (e.g., Kubernetes with proper resource requests/limits).
+
+
