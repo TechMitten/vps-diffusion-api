@@ -1,0 +1,11 @@
+services:
+  api:
+    build:
+      context: ../files
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '3.8'
+          memory: 7000M
