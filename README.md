@@ -17,6 +17,16 @@ Images generated at 512x512 with 1-step inference on a standard CPU:
 * **Smart Memory Management:** Includes lazy loading and auto-unloading to free host RAM during idle periods.
 * **Built-in Queue Management:** Asynchronous locking prevents CPU core contention and server-crashing request pileups.
 
+## Performance & Benchmarks (4 Dedicated vCPUs)
+
+Real-world execution times on a standard 4-core / 8GB RAM host instance (512x512, 1 step):
+
+| State | Total Response Time | Latency Breakdown | Notes |
+| :--- | :--- | :--- | :--- |
+| **Cold Start (Initial Request)** | **~70s** | ~24s model load + ~25s OpenVINO graph compile + ~21s inference & VAE decode | Occurs only on the first request or after the 5-minute idle unloader clears memory. |
+| **Graph Warm-up (Second Request)** | **~47s** | ~22s JIT graph compilation + ~25s inference & VAE decode | OpenVINO finalizes execution optimizations for the dynamic shape graph. |
+| **Warm Pipeline (Subsequent Requests)** | **~19s – 21s** | **~5.5s UNet denoising** + ~14s full VAE decoding | Steady-state speed while the model remains loaded in RAM. |
+
 ## Minimum Hardware Requirements
 
 To ensure stable model compilation and reliable execution, your host must meet these minimum specifications:
